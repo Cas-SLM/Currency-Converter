@@ -8,12 +8,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
-import java.util.Objects;
 
 import com.google.gson.Gson;
 //import com.fasterxml.jackson.databind.
 
 public class ExchangeRate {
+    public void updateSymbols() {
+
+    }
+
     public static String getSymbols() {
         HttpRequest getCurrencies;
         HttpResponse<String> currenciesResponse;
@@ -27,18 +30,42 @@ public class ExchangeRate {
         } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(currenciesResponse.body());
-
         return currenciesResponse.body();
     }
 
-    public static void updateSymbols() {
+    public static String getRates(String symbol) {
+        HttpRequest getExRates;
+        HttpResponse<String> exRatesResponse;
+        try {
+            getExRates = HttpRequest.newBuilder()
+                    .uri(new URI("https://api.frankfurter.app/latest?from=" + symbol.toUpperCase()))
+                    .GET().build();
+            HttpClient getResponse = HttpClient.newHttpClient();
+            exRatesResponse = getResponse.send(getExRates, BodyHandlers.ofString());
+        } catch (URISyntaxException | IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return exRatesResponse.body();
 
     }
 
     public static void main(String[] args) {
         Gson gson = new Gson();
-        var symbols = gson.fromJson(getSymbols(), HashMap.class);
+        String allSymbols = getSymbols();
+        System.out.println(allSymbols);
+        HashMap<String, String> symbols = gson.fromJson(allSymbols, HashMap.class);
+        System.out.println(symbols);
+        HashMap<String, Double> ZARRates = new HashMap<>();
+        for (String symbol : symbols.keySet()) {
+            ZARRates.put(symbol, null);
+        }
+        System.out.println(ZARRates);
+        String RandRates = getRates("ZAR");
+        System.out.println(RandRates);
+        RateRequest ZAR = gson.fromJson(RandRates, RateRequest.class);
+        ZAR.setSymbol();
+        System.out.println(ZAR);
+        System.out.println(ZAR.exchangeTo("AUD", 123));
     }
 
 }
