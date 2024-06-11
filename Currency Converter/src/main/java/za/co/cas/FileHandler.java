@@ -9,15 +9,17 @@ import java.util.*;
 
 public class FileHandler {
     private static final Map<String, String> env = System.getenv();
-    private static final String CURRENT_DIR = System.getProperty("user.dir");
-    private static final String PATH = "Currency Converter/src/main/java/za/co/cas/Symbols.json";
-    private static File CURRENCIES = new File(PATH);
+//    private static final String CURRENT_DIR = System.getProperty("user.dir");
+    private static String sp = File.separator;
+    private static final String PATH = System.getProperty("user.dir") + sp + "Currency Converter" + sp + "src" + sp +
+            "main" + sp + "java" + sp + "za" + sp + "co" + sp + "cas" + sp + "Symbols.json";
+    private static File SymbolsFile = new File(PATH);
 
     public static String read() {
         StringBuilder output = new StringBuilder();
-        if (CURRENCIES.canRead()) {
+        if (SymbolsFile.canRead()) {
             try {
-                BufferedReader fileReader = new BufferedReader(new FileReader(CURRENCIES));
+                BufferedReader fileReader = new BufferedReader(new FileReader(SymbolsFile));
                 String line;
                 while ((line = fileReader.readLine()) != null) {
                     output.append(line.strip());
@@ -34,7 +36,7 @@ public class FileHandler {
     public static String readstring() {
         String output;
         try {
-            output = Files.readString(CURRENCIES.toPath());
+            output = Files.readString(SymbolsFile.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -44,7 +46,7 @@ public class FileHandler {
     public static String writeString(String text) {
         StringBuilder output = new StringBuilder();
         try {
-            output.append(Files.writeString(CURRENCIES.toPath(), text));
+            output.append(Files.writeString(SymbolsFile.toPath(), text));
         } catch (IOException e) {
             output.append("");
         }
@@ -59,8 +61,8 @@ public class FileHandler {
         Gson gson = new Gson();
         String date = symbol.getDate();
         HashMap contents = gson.fromJson(read(), HashMap.class);
-        if (!contents.containsKey("all")) {
-            contents.put("all", new LinkedTreeMap<>());
+        if (!contents.containsKey("rates")) {
+            contents.put("rates", new LinkedTreeMap<>());
         }
         if (!contents.containsKey("date")) contents.put("date", date);
         else {
@@ -71,21 +73,25 @@ public class FileHandler {
                 contents.put("date", date);
             }
         }
-        Set<?> keyset = contents.keySet();
+        if (!contents.containsKey("supported")) {
+            LinkedTreeMap<?, ?> supported = gson.fromJson(Request.getSymbols(), LinkedTreeMap.class);
+            contents.put("supported", supported);
+        }
+        HashSet<?> keyset = new HashSet<>(contents.keySet());
         for (var key : keyset) {
-            if (key instanceof String)
-                if (!((String) key).equals("all") && ((String) key).equals("date")) {
+            if (key instanceof String) {
+                if (!((String) key).equals("rates") && !((String) key).equals("date") && !((String) key).equals("supported")) {
                     contents.remove(key);
                 }
-            else {
+            } else {
                 contents.remove(key);
                 }
         }
-        LinkedTreeMap all = (LinkedTreeMap) contents.get("all");
+        LinkedTreeMap all = (LinkedTreeMap) contents.get("rates");
         all.put(symbol.getBase(), symbol.getRates());
-        contents.put("all", all);
+        contents.put("rates", all);
         contents.put("date", date);
-        writeString(Symbol.toJSON(all, "  ", "\n",true));
+        writeString(Symbol.toJSON(contents, "  ", "\n",true));
     }
 
     public static void main(String[] args) {

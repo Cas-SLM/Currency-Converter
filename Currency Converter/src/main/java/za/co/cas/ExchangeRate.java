@@ -81,7 +81,7 @@ public class ExchangeRate {
     public static void main(String[] args) {
         Gson gson = new Gson();
         String allSymbols = Request.getSymbols();
-        HashMap<String, String> Symbols =gson.fromJson(allSymbols, HashMap.class);
+        HashMap<String, String> Symbols = gson.fromJson(allSymbols, HashMap.class);
         for (String key : Symbols.keySet()) {
             FileHandler.update(new Symbol(key));
         }
