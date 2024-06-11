@@ -1,6 +1,9 @@
 package za.co.cas;
 
 import com.google.gson.Gson;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,9 +14,122 @@ public class Symbol {
     private String symbol;
     private String name;
     private String date;
-    private HashMap<String, Double> rates;
-    private Gson gson;
+    private HashMap<?, ?> rates;
 
+    /*public Symbol(String symbol, HashMap<?, ?> rates, String date) {
+        this.amount = 1.0;
+        this.base = symbol;
+        this.date = date;
+        this.rates = rates;
+        setSymbol();
+        setName();
+    }*/
+
+    public Symbol(String symbol) {
+        Gson gson = new Gson();
+        String rates = Request.getRates(symbol);
+        Symbol newSymbol = gson.fromJson(rates, Symbol.class);
+        this.amount = newSymbol.getAmount();
+        this.base = newSymbol.getBase();
+        this.date = newSymbol.getDate();
+        this.rates = newSymbol.getRates();
+        setSymbol();
+        setName();
+    }
+
+    public Symbol(String symbol, HashMap<?, ?> rates) {
+        this.amount = 1.0;
+        this.base = symbol;
+        LocalDate date = LocalDate.now(ZoneId.systemDefault());
+        this.date = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        this.rates = rates;
+        setSymbol();
+        setName();
+    }
+
+    public Symbol create(String symbol) {
+        String symbolRates = Request.getRates(symbol);
+        Gson gson = new Gson();
+        return gson.fromJson(symbolRates, Symbol.class);
+    }
+
+    public Map<?, ?> toMap() {
+        Gson gson = new Gson();
+        return gson.fromJson(gson.toJson(this), HashMap.class);
+    }
+
+    /*private static String toMap(Map<?, ?> map, String space, String delimiter) {
+        StringBuilder output = new StringBuilder();
+        output.append("{").append(delimiter);
+        int i = 0;
+        int length = map.keySet().size();
+        for (var key : map.keySet()) {
+            var value = map.get(key);
+            if (value instanceof Map<?, ?>) {
+                if ((((Map<?, ?>) value)).size() == 1)
+                    output.append(space).append(key).append(": ").append(toMap((Map<?, ?>) value, "", ""));
+                else
+                    output.append(space).append(key).append(": ").append(toMap((Map<?, ?>) value, space + "  ", delimiter));
+            } else output.append(space).append(key).append(": ").append(value.toString());
+            if (i < length - 1) output.append(",").append(delimiter);
+            i++;
+        }
+        output.append(delimiter).append(space).append("}");
+        return output.toString();
+    }*/
+
+
+
+    public String toJSON(){
+        return toJSON(toMap(), "  ", "\n", true);
+    }
+
+    public static String toJSON(Map<?, ?> map, String space, String delimiter, boolean surround) {
+        StringBuilder output = new StringBuilder();
+        output.append("{").append(delimiter);
+        int i = 0;
+        int length = map.keySet().size();
+        for (var key : map.keySet()) {
+            var value = map.get(key);
+            if (value instanceof Map<?, ?>) {
+                if ((((Map<?, ?>) value)).size() == 1) {
+                    output.append(space);
+                    if (key instanceof String && surround) {
+                        output.append('\"').append(key).append('\"');
+                    } else {
+                        output.append(key);
+                    }
+                    output.append(": ").append(toJSON((Map<?, ?>) value, "", "", surround));
+                }
+                else {
+                    output.append(space);
+                    if (key instanceof String && surround) {
+                        output.append('\"').append(key).append('\"');
+                    } else {
+                        output.append(key);
+                    }
+                    output.append(": ").append(toJSON((Map<?, ?>) value, space + "  ", delimiter, surround));
+                }
+            } else {
+                output.append(space);
+                if (key instanceof String && surround) {
+                    output.append('\"').append(key).append('\"');
+                } else {
+                    output.append(key);
+                }
+                output.append(": ");
+                if (value instanceof String && surround) {
+                    output.append('\"').append(value.toString()).append('\"');
+                } else {
+                    output.append(value.toString());
+                }
+            }
+            if (i < length - 1) output.append(",").append(delimiter);
+            i++;
+        }
+        output.append(delimiter).append(space).append("}");
+        return output.toString();
+    }
 
     public Double exchangeTo(String symbol, Integer value) {
         return exchangeTo(symbol, (double) value);
@@ -21,26 +137,12 @@ public class Symbol {
     public Double exchangeTo(String symbol, Double value) {
         double exchanged = 0;
         if (rates.containsKey(symbol)) {
-            exchanged = rates.get(symbol) * value;
+            var ratio = rates.get(symbol);
+//            if (ratio instanceof Double) {
+                exchanged = (double) ratio * value;
+//            }
         }
         return exchanged;//.valueOf(exchanged);
-    }
-
-    public Symbol(String symbol) {
-        gson = new Gson();
-        Symbol newSymbol = gson.fromJson(RateRequest.getRates(symbol), Symbol.class);
-        newSymbol.setSymbol();
-        newSymbol.setName();
-        this.amount = newSymbol.getAmount();
-        this.base = newSymbol.getBase();
-        this.date = newSymbol.getDate();
-        this.name = newSymbol.getName();
-        this.symbol = newSymbol.getSymbol();
-        this.rates = newSymbol.getRates();
-    }
-
-    public Map<?, ?> map() {
-        return gson.fromJson(gson.toJson(this), HashMap.class);
     }
 
     public String getSymbol() {
@@ -65,7 +167,7 @@ public class Symbol {
     }
 
     public HashMap<String, Double> getRates() {
-        return rates;
+        return (HashMap<String, Double>) rates;
     }
     public void setRates(HashMap<String, Double> rates) {
         this.rates = rates;
@@ -87,13 +189,16 @@ public class Symbol {
 
     @Override
     public String toString() {
+        Gson gson = new Gson();
         return "Symbol{" +
                 "name='" + this.name + '\'' +
+//                "name='" + Currency.getInstance(this.base).getDisplayName() + '\'' +
                 ", symbol='" + this.symbol + '\'' +
+//                ", symbol='" + Currency.getInstance(this.base).getSymbol() + '\'' +
                 ", base='" + this.base + '\'' +
-//                ", date='" + this.date + '\'' +
+                ", date='" + this.date + '\'' +
                 ", amount=" + this.amount +
-                ", rates=" + gson.fromJson(ExchangeRate.map(this.rates, "", ""), HashMap.class) +
+                ", rates=" + gson.fromJson(toJSON(this.rates, "", "", false), HashMap.class) +
                 '}';
     }
 }

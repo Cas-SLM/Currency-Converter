@@ -1,12 +1,5 @@
 package za.co.cas;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,50 +11,66 @@ public class ExchangeRate {
 
     }
 
-    public static String getSymbols() {
-        HttpRequest getCurrencies;
-        HttpResponse<String> currenciesResponse;
-        try {
-             getCurrencies = HttpRequest.newBuilder()
-                    .uri(new URI("https://api.frankfurter.app/currencies"))
-                    .GET().build();
-
-            HttpClient getRequest = HttpClient.newHttpClient();
-            currenciesResponse = getRequest.send(getCurrencies, BodyHandlers.ofString());
-        } catch (URISyntaxException | IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return currenciesResponse.body();
-    }
-
-    public static Map<?, ?> getRates(String symbol) {
-        Gson gson = new Gson();
-        HttpRequest getExRates;
-        HttpResponse<String> exRatesResponse;
-        try {
-            getExRates = HttpRequest.newBuilder()
-                    .uri(new URI("https://api.frankfurter.app/latest?from=" + symbol.toUpperCase()))
-                    .GET().build();
-            HttpClient getResponse = HttpClient.newHttpClient();
-            exRatesResponse = getResponse.send(getExRates, BodyHandlers.ofString());
-        } catch (URISyntaxException | IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return gson.fromJson(exRatesResponse.body(), HashMap.class);
-    }
-
     public static String map(Map<?, ?> map, String space, String delimiter) {
         StringBuilder output = new StringBuilder();
         output.append("{").append(delimiter);
         int i = 0;
         int length = map.keySet().size();
         for (var key : map.keySet()) {
-            if (map.get(key) instanceof Map<?, ?>) {
-                if ((((Map<?, ?>) map.get(key))).size() == 1)
-                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) map.get(key), "", ""));
+            var value = map.get(key);
+            if (value instanceof Map<?, ?>) {
+                if ((((Map<?, ?>) value)).size() == 1)
+                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) value, "", ""));
                 else
-                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) map.get(key), space + "  ", delimiter));
-            } else output.append(space).append(key).append(": ").append(map.get(key).toString());
+                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) value, space + "  ", delimiter));
+            } else output.append(space).append(key).append(": ").append(value.toString());
+            if (i < length - 1) output.append(",").append(delimiter);
+            i++;
+        }
+        output.append(delimiter).append(space).append("}");
+        return output.toString();
+    }
+
+    public static String toJSON(Map<?, ?> map, String space, String delimiter) {
+        StringBuilder output = new StringBuilder();
+        output.append("{").append(delimiter);
+        int i = 0;
+        int length = map.keySet().size();
+        for (var key : map.keySet()) {
+            var value = map.get(key);
+            if (value instanceof Map<?, ?>) {
+                if ((((Map<?, ?>) value)).size() == 1) {
+                    output.append(space);
+                    if (key instanceof String) {
+                        output.append('\"').append(key).append('\"');
+                    } else {
+                        output.append(key);
+                    }
+                    output.append(": ").append(toJSON((Map<?, ?>) value, "", ""));
+                }
+                else {
+                    output.append(space);
+                    if (key instanceof String) {
+                        output.append('\"').append(key).append('\"');
+                    } else {
+                        output.append(key);
+                    }
+                    output.append(": ").append(toJSON((Map<?, ?>) value, space + "  ", delimiter));
+                }
+            } else {
+                output.append(space);
+                if (key instanceof String) {
+                    output.append('\"').append(key).append('\"');
+                } else {
+                    output.append(key);
+                }
+                output.append(": ");
+                if (value instanceof String) {
+                    output.append('\"').append(value.toString()).append('\"');
+                } else {
+                    output.append(value.toString());
+                }
+            }
             if (i < length - 1) output.append(",").append(delimiter);
             i++;
         }
@@ -71,22 +80,19 @@ public class ExchangeRate {
 
     public static void main(String[] args) {
         Gson gson = new Gson();
-        String allSymbols = getSymbols();
+        String allSymbols = Request.getSymbols();
+        HashMap<String, String> Symbols =gson.fromJson(allSymbols, HashMap.class);
+        for (String key : Symbols.keySet()) {
+            FileHandler.update(new Symbol(key));
+        }
         System.out.println("Supported Symbols: " + allSymbols);
         HashMap<String, String> symbols = gson.fromJson(allSymbols, HashMap.class);
         System.out.println("Symbols with names: " + symbols);
-//        HashMap<String, Map<?, ?>> ZARRates = new HashMap<>();
-//        for (String symbol : symbols.keySet()) {
-//            ZARRates.put(symbol, getRates(symbol));
-//        }
-//        System.out.println("Exchange Rates Per Symbol : \n  " + map(ZARRates, "  ", "\n"));
 
         Symbol ZAR = new Symbol("ZAR");
-        Map<?, ?> LocalZAR = getRates("ZAR");
         System.out.println("RateRequest request: " + ZAR);
-        System.out.println("Infile request: " + LocalZAR);
-        System.out.println("RateRequest map: " + map(ZAR.map(), "  ", "\n"));
-        System.out.println("Infile map: " + map(LocalZAR, "  ", "\n"));
+        System.out.println("RateRequest map: " + map(ZAR.toMap(), "  ", "\n"));
+        System.out.println("RateRequest json: " + Symbol.toJSON(ZAR.toMap(), "  ", "\n", true));
         System.out.println("ZAR to AUD: " + ZAR.exchangeTo("AUD", 123));
     }
 
