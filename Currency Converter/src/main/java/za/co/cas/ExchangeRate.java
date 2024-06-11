@@ -8,6 +8,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 //import com.fasterxml.jackson.databind.
@@ -33,7 +34,8 @@ public class ExchangeRate {
         return currenciesResponse.body();
     }
 
-    public static String getRates(String symbol) {
+    public static Map<?, ?> getRates(String symbol) {
+        Gson gson = new Gson();
         HttpRequest getExRates;
         HttpResponse<String> exRatesResponse;
         try {
@@ -45,27 +47,47 @@ public class ExchangeRate {
         } catch (URISyntaxException | IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return exRatesResponse.body();
+        return gson.fromJson(exRatesResponse.body(), HashMap.class);
+    }
 
+    public static String map(Map<?, ?> map, String space, String delimiter) {
+        StringBuilder output = new StringBuilder();
+        output.append("{").append(delimiter);
+        int i = 0;
+        int length = map.keySet().size();
+        for (var key : map.keySet()) {
+            if (map.get(key) instanceof Map<?, ?>) {
+                if ((((Map<?, ?>) map.get(key))).size() == 1)
+                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) map.get(key), "", ""));
+                else
+                    output.append(space).append(key).append(": ").append(map((Map<?, ?>) map.get(key), space + "  ", delimiter));
+            } else output.append(space).append(key).append(": ").append(map.get(key).toString());
+            if (i < length - 1) output.append(",").append(delimiter);
+            i++;
+        }
+        output.append(delimiter).append(space).append("}");
+        return output.toString();
     }
 
     public static void main(String[] args) {
         Gson gson = new Gson();
         String allSymbols = getSymbols();
-        System.out.println(allSymbols);
+        System.out.println("Supported Symbols: " + allSymbols);
         HashMap<String, String> symbols = gson.fromJson(allSymbols, HashMap.class);
-        System.out.println(symbols);
-        HashMap<String, Double> ZARRates = new HashMap<>();
-        for (String symbol : symbols.keySet()) {
-            ZARRates.put(symbol, null);
-        }
-        System.out.println(ZARRates);
-        String RandRates = getRates("ZAR");
-        System.out.println(RandRates);
-        RateRequest ZAR = gson.fromJson(RandRates, RateRequest.class);
-        ZAR.setSymbol();
-        System.out.println(ZAR);
-        System.out.println(ZAR.exchangeTo("AUD", 123));
+        System.out.println("Symbols with names: " + symbols);
+//        HashMap<String, Map<?, ?>> ZARRates = new HashMap<>();
+//        for (String symbol : symbols.keySet()) {
+//            ZARRates.put(symbol, getRates(symbol));
+//        }
+//        System.out.println("Exchange Rates Per Symbol : \n  " + map(ZARRates, "  ", "\n"));
+
+        Symbol ZAR = new Symbol("ZAR");
+        Map<?, ?> LocalZAR = getRates("ZAR");
+        System.out.println("RateRequest request: " + ZAR);
+        System.out.println("Infile request: " + LocalZAR);
+        System.out.println("RateRequest map: " + map(ZAR.map(), "  ", "\n"));
+        System.out.println("Infile map: " + map(LocalZAR, "  ", "\n"));
+        System.out.println("ZAR to AUD: " + ZAR.exchangeTo("AUD", 123));
     }
 
 }
