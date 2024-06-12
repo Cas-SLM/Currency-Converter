@@ -1,6 +1,8 @@
 package za.co.cas;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -14,16 +16,16 @@ public class Symbol {
     private String symbol;
     private String name;
     private String date;
-    private HashMap<?, ?> rates;
+    private Map<?, ?> rates;
 
-    /*public Symbol(String symbol, HashMap<?, ?> rates, String date) {
+    public Symbol(String symbol, Map<?, ?> rates, String date) {
         this.amount = 1.0;
         this.base = symbol;
         this.date = date;
         this.rates = rates;
         setSymbol();
         setName();
-    }*/
+    }
 
     public Symbol(String symbol) {
         Gson gson = new Gson();
@@ -37,7 +39,7 @@ public class Symbol {
         setName();
     }
 
-    public Symbol(String symbol, HashMap<?, ?> rates) {
+    public Symbol(String symbol, Map<?, ?> rates) {
         this.amount = 1.0;
         this.base = symbol;
         LocalDate date = LocalDate.now(ZoneId.systemDefault());
@@ -47,10 +49,20 @@ public class Symbol {
         setName();
     }
 
-    public Symbol create(String symbol) {
+    public static Symbol create(String symbol) {
         String symbolRates = Request.getRates(symbol);
         Gson gson = new Gson();
         return gson.fromJson(symbolRates, Symbol.class);
+    }
+
+    public static Symbol fromFile(String symbol) {
+        HashMap<?, ?> contents = FileHandler.getMap();
+        if (FileHandler.supportedCurrency(symbol)) {
+            LinkedTreeMap<?, ?> rates = (LinkedTreeMap<?, ?>) contents.get("rates");
+            LinkedTreeMap<?, ?> supported = (LinkedTreeMap<?, ?>) contents.get("supported");
+            String date = (String) contents.get("date");
+            return new Symbol(symbol, rates, date);
+        } else throw new IllegalArgumentException(symbol + " is not supported");
     }
 
     public Map<?, ?> toMap() {

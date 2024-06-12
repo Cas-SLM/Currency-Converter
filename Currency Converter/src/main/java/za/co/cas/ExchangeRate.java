@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.Gson;
+import org.jetbrains.annotations.NotNull;
 //import com.fasterxml.jackson.databind.
 
 public class ExchangeRate {
@@ -11,7 +12,8 @@ public class ExchangeRate {
 
     }
 
-    public static String map(Map<?, ?> map, String space, String delimiter) {
+    @NotNull
+    public static String map(@NotNull Map<?, ?> map, String space, String delimiter) {
         StringBuilder output = new StringBuilder();
         output.append("{").append(delimiter);
         int i = 0;
@@ -31,7 +33,8 @@ public class ExchangeRate {
         return output.toString();
     }
 
-    public static String toJSON(Map<?, ?> map, String space, String delimiter) {
+    @NotNull
+    public static String toJSON(@NotNull Map<?, ?> map, String space, String delimiter) {
         StringBuilder output = new StringBuilder();
         output.append("{").append(delimiter);
         int i = 0;
@@ -79,20 +82,20 @@ public class ExchangeRate {
     }
 
     public static void main(String[] args) {
-        Gson gson = new Gson();
-        String allSymbols = Request.getSymbols();
-        HashMap<String, String> Symbols = gson.fromJson(allSymbols, HashMap.class);
-        for (String key : Symbols.keySet()) {
-            FileHandler.update(new Symbol(key));
-        }
-        System.out.println("Supported Symbols: " + allSymbols);
-        HashMap<String, String> symbols = gson.fromJson(allSymbols, HashMap.class);
-        System.out.println("Symbols with names: " + symbols);
+//        Gson gson = new Gson();
+//        String allSymbols = Request.getSymbols();
+//        HashMap<String, String> Symbols = gson.fromJson(allSymbols, HashMap.class);
+//        for (String key : Symbols.keySet()) {
+//            FileHandler.update(new Symbol(key));
+//        }
+//        System.out.println("Supported Symbols: " + allSymbols);
+//        HashMap<String, String> symbols = gson.fromJson(allSymbols, HashMap.class);
+//        System.out.println("Symbols with names: " + symbols);
 
         Symbol ZAR = new Symbol("ZAR");
-        System.out.println("RateRequest request: " + ZAR);
-        System.out.println("RateRequest map: " + map(ZAR.toMap(), "  ", "\n"));
-        System.out.println("RateRequest json: " + Symbol.toJSON(ZAR.toMap(), "  ", "\n", true));
+        System.out.println("Symbol: " + ZAR);
+        System.out.println("Symbol map: " + map(ZAR.toMap(), "  ", "\n"));
+        System.out.println("Symbol json: " + Symbol.toJSON(ZAR.toMap(), "  ", "\n", true));
         System.out.println("ZAR to AUD: " + ZAR.exchangeTo("AUD", 123));
     }
 

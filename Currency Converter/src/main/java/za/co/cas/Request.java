@@ -1,5 +1,8 @@
 package za.co.cas;
 
+import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,5 +44,11 @@ public class Request {
             throw new RuntimeException(e);
         }
         return currenciesResponse.body();
+    }
+
+    public static LinkedTreeMap<?, ?> getSupported() {
+        Gson GSON = new Gson();
+        LinkedTreeMap<?, ?> supported = GSON.fromJson(Request.getSymbols(), LinkedTreeMap.class);
+        return supported;
     }
 }
