@@ -55,16 +55,6 @@ public class Symbol {
         return gson.fromJson(symbolRates, Symbol.class);
     }
 
-    public static Symbol fromFile(String symbol) {
-        HashMap<?, ?> contents = FileHandler.getMap();
-        if (FileHandler.supportedCurrency(symbol)) {
-            LinkedTreeMap<?, ?> rates = (LinkedTreeMap<?, ?>) contents.get("rates");
-            LinkedTreeMap<?, ?> supported = (LinkedTreeMap<?, ?>) contents.get("supported");
-            String date = (String) contents.get("date");
-            return new Symbol(symbol, rates, date);
-        } else throw new IllegalArgumentException(symbol + " is not supported");
-    }
-
     public Map<?, ?> toMap() {
         Gson gson = new Gson();
         return gson.fromJson(gson.toJson(this), HashMap.class);
@@ -161,14 +151,22 @@ public class Symbol {
         return symbol;
     }
     public void setSymbol() {
-        this.symbol = Currency.getInstance(this.base).getSymbol();
+        try {
+            this.symbol = Currency.getInstance(this.base).getSymbol();
+        } catch (IllegalArgumentException e) {
+            this.symbol = "#";
+        }
     }
 
     public String getName() {
         return name;
     }
     public void setName() {
-        this.name = Currency.getInstance(this.base).getDisplayName();
+        try {
+            this.name = Currency.getInstance(this.base).getDisplayName();
+        } catch (IllegalArgumentException e) {
+            this.symbol = "None";
+        }
     }
 
     public String getDate() {

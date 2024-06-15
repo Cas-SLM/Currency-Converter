@@ -2,10 +2,8 @@ package za.co.cas;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.print.attribute.HashDocAttributeSet;
 import java.time.LocalDate;
 import java.io.*;
 import java.nio.file.Files;
@@ -21,6 +19,32 @@ public class FileHandler {
             "main" + SP + "java" + SP + "za" + SP + "co" + SP + "cas" + SP + "Symbols.json";
     private static final File SYMBOLS_FILE = new File(PATH);
     private static final Gson GSON = new Gson();
+    private Map<?, ?> contents; // = new LinkedTreeMap<>();
+    private String date;
+    private LinkedTreeMap<String, LinkedTreeMap> rates;
+
+    public LinkedTreeMap<String, String> getSupported() {
+        return supported;
+    }
+
+    private LinkedTreeMap<String, String> supported;
+
+    public FileHandler() {
+        /*Thread update = new Thread(this::update);
+        update.start();
+        while (update.isAlive()){
+            try {
+                System.out.println("Updating...");
+                Thread.sleep(2500);
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }*/
+        contents = contents();
+        date = (String) contents.get("date");
+        rates = (LinkedTreeMap<String, LinkedTreeMap>) contents().get("rates");
+        supported = (LinkedTreeMap<String, String>) contents().get("supported");
+    }
 
     private static void create() {
         try {
@@ -67,14 +91,19 @@ public class FileHandler {
         return GSON.fromJson(read(), HashMap.class);
     }
 
-    private static boolean findSimilar(String currency) {
-        LinkedTreeMap<?, ?> supported = (LinkedTreeMap) contents().get("supported");
-        for (var value : supported.keySet()) {
-            assert value instanceof String;
-            if (((String) value).endsWith(currency))
-                return true;
+    public Map<String, String> findSimilar(String currency) {
+//        LinkedTreeMap<?, ?> supported = (LinkedTreeMap) contents().get("supported");
+        HashMap<String, String> similar = new HashMap<>();
+        for (var key : supported.keySet()) {
+//            assert key instanceof String;
+            String value = supported.get(key).toLowerCase();
+            if (((String) key).toLowerCase().endsWith(currency.toLowerCase())) {
+                similar.put((String) key, value);
+            } else if (value.toLowerCase().endsWith(currency.toLowerCase())) {
+                similar.put((String) key, value);
+            }
         }
-        return false;
+        return similar;
     }
 
     private static String read() {
@@ -114,9 +143,9 @@ public class FileHandler {
         }
     }
 
-    private static void update(Symbol symbol) {
+    private void update(Symbol symbol) {
         String date = symbol.getDate();
-        HashMap contents = getMap();
+        HashMap contents = contents();
         LinkedTreeMap all = (LinkedTreeMap) contents.get("rates");
         all.put(symbol.getBase(), symbol.getRates());
         contents.put("rates", all);
@@ -124,82 +153,42 @@ public class FileHandler {
         writeString(Symbol.toJSON(contents, "  ", "\n",true));
     }
 
-    public static boolean supportedCurrency(String currency) {
-        LinkedTreeMap<?, ?> supported = (LinkedTreeMap) contents().get("supported");
-        if (((Map)supported).containsKey(currency) || (supported).containsValue(currency) || findSimilar(currency))
-            return true;
-        else return false;
-    }
-
-    public static String symbol(String currency) {
-        if (supportedCurrency(currency)) {
-            HashMap<?, ?> supported = (HashMap) contents().get("supported");
-            for (var key : supported.keySet()) {
-                assert key instanceof String;
-                var value = supported.get(key);
-                assert value instanceof String;
-                LinkedList<String> currencies = new LinkedList<>();
-                LinkedList<String> symbols = new LinkedList<>();
-                if (((String) value).endsWith(currency)) {
-                    currencies.add((String) value);
-                    symbols.add((String) key);
-                }
-                if (currencies.size() == 1) {
-                    LinkedTreeMap<?, ?> rates = (LinkedTreeMap<?, ?>) contents().get("rates");
-                    return symbols.getFirst();
-                } else {
-                    //TODO: ask for which symbol
-                    System.out.println("Chose symbol:");
-                    return symbols.getFirst();
-                }
-            }
-        }
-        return "";
-    }
-
-    public static HashMap<?, ?> getMap() {
-        return contents();
-    }
-
-    @Nullable
-    public static Symbol getSymbol(String currency) {
-        if (supportedCurrency(currency)) {
-            LinkedTreeMap<?, ?> supported = (LinkedTreeMap) contents().get("supported");
-            for (var key : supported.keySet()) {
-                assert key instanceof String;
-                var value = supported.get(key);
-                assert value instanceof String;
-                LinkedList<String> currencies = new LinkedList<>();
-                LinkedList<String> symbols = new LinkedList<>();
-                if (((String) value).endsWith(currency)) {
-                    currencies.add((String) value);
-                    symbols.add((String) key);
-                }
-                if (currencies.size() == 1) {
-                    LinkedTreeMap<?, ?> rates = (LinkedTreeMap<?, ?>) contents().get("rates");
-                    return new Symbol(symbols.getFirst(),(LinkedTreeMap<?, ?>) rates.get(symbols.getFirst()));
-                } else {
-                    //TODO: ask for which symbol
-                    System.out.println("Chose symbol:");
-                    return new Symbol("ZAR");
-                }
-            }
-        }
-        return null;
-    }
-
-    public static void update() {
+    public void update() {
         create();
         HashMap<?, ?> contents = contents();
+        String today = LocalDate.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         if (contents.containsKey("supported")) {
-            var supported = contents.get("supported");
-            //NOTE: supported might be a LinkedTreeMap
-            assert supported instanceof Map<?,?>;
-            for (var key : ((Map<?, ?>) supported).keySet()) {
-                assert key instanceof String;
-                Symbol newSymbol = Symbol.create((String) key);
-                update(newSymbol);
+            if (!contents.get("date").equals(today)) {
+                var supported = contents.get("supported");
+                //NOTE: supported might be a LinkedTreeMap
+                assert supported instanceof Map<?, ?>;
+                for (var key : ((Map<?, ?>) supported).keySet()) {
+                    assert key instanceof String;
+                    Symbol newSymbol = Symbol.create((String) key);
+                    update(newSymbol);
+                }
             }
         }
+    }
+
+    public Symbol getSymbol(String symbol) {
+        Symbol newSymbol = null;
+        if (supported.containsKey(symbol)) {
+                newSymbol = new Symbol(symbol, rates.get(symbol) ,date);
+        } else {
+            try {
+                Process process = Runtime.getRuntime().exec("ping api.frankfurter.app");
+                int result = process.waitFor();
+                if (result == 0) {
+                    newSymbol = new Symbol(symbol);
+                } else {
+                    int x = 0;
+                }
+            } catch (IOException | InterruptedException e) {
+                int x = 0;
+            }
+        }
+        return newSymbol;
+
     }
 }
