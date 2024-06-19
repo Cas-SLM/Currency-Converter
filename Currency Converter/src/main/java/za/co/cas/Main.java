@@ -8,8 +8,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Main {
     private static Thread updater;
@@ -85,6 +83,7 @@ public class Main {
                     from = file.getSymbol(keys.getFirst());
                     done = true;
                 } else if (similar.isEmpty()) {
+                    System.out.println("Currency is not supported: " + in);
                     continue;
                 } else {
                     from = getSymbol(similar, inputReader, file);
@@ -107,6 +106,7 @@ public class Main {
                     to = file.getSymbol(keys.getFirst());
                     done = true;
                 } else if (similar.isEmpty()) {
+                    System.out.println("Currency is not supported: " + in);
                     continue;
                 } else {
                     to = getSymbol(similar, inputReader, file);

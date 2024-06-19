@@ -1,7 +1,6 @@
 package za.co.cas;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -59,28 +58,6 @@ public class Symbol {
         Gson gson = new Gson();
         return gson.fromJson(gson.toJson(this), HashMap.class);
     }
-
-    /*private static String toMap(Map<?, ?> map, String space, String delimiter) {
-        StringBuilder output = new StringBuilder();
-        output.append("{").append(delimiter);
-        int i = 0;
-        int length = map.keySet().size();
-        for (var key : map.keySet()) {
-            var value = map.get(key);
-            if (value instanceof Map<?, ?>) {
-                if ((((Map<?, ?>) value)).size() == 1)
-                    output.append(space).append(key).append(": ").append(toMap((Map<?, ?>) value, "", ""));
-                else
-                    output.append(space).append(key).append(": ").append(toMap((Map<?, ?>) value, space + "  ", delimiter));
-            } else output.append(space).append(key).append(": ").append(value.toString());
-            if (i < length - 1) output.append(",").append(delimiter);
-            i++;
-        }
-        output.append(delimiter).append(space).append("}");
-        return output.toString();
-    }*/
-
-
 
     public String toJSON(){
         return toJSON(toMap(), "  ", "\n", true);
@@ -140,11 +117,9 @@ public class Symbol {
         double exchanged = 0;
         if (rates.containsKey(symbol)) {
             var ratio = rates.get(symbol);
-//            if (ratio instanceof Double) {
-                exchanged = (double) ratio * value;
-//            }
+            exchanged = (double) ratio * value;
         }
-        return exchanged;//.valueOf(exchanged);
+        return exchanged;
     }
 
     public String getSymbol() {
@@ -202,9 +177,7 @@ public class Symbol {
         Gson gson = new Gson();
         return "Symbol{" +
                 "name='" + this.name + '\'' +
-//                "name='" + Currency.getInstance(this.base).getDisplayName() + '\'' +
                 ", symbol='" + this.symbol + '\'' +
-//                ", symbol='" + Currency.getInstance(this.base).getSymbol() + '\'' +
                 ", base='" + this.base + '\'' +
                 ", date='" + this.date + '\'' +
                 ", amount=" + this.amount +

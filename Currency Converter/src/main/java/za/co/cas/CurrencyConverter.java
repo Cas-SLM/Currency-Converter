@@ -23,9 +23,9 @@ public class CurrencyConverter extends JFrame {
     public CurrencyConverter() {
         FileHandler file = new FileHandler();
         LinkedTreeMap<String, String> supported = file.getSupported();
-        ArrayList<String> curries = new ArrayList<>(){{
+        ArrayList<Symbol> symbols = new ArrayList<>(){{
             for (String key : supported.keySet()) {
-                add(key + ": " + supported.get(key));
+                add(file.getSymbol(key));
             }
         }};
         Thread updater = new Thread(file::update, "Symbols File Updater");
@@ -61,7 +61,13 @@ public class CurrencyConverter extends JFrame {
         inputField = new JTextField(10);
         outputField = new JTextField(10);
         outputField.setEditable(false);
-        String[] currencies = curries.toArray(new String[0]);//{"USD", "EUR", "GBP", "JPY", "INR"}; //TODO: ADD SUPPORTED CURRENCIES
+//        String[] currencies = curries.toArray(new String[0]);
+        String[] currencies = new String[symbols.size()];
+        int i = 0;
+        for (Symbol symbol : symbols) {
+            currencies[i] = symbol.getBase() + ": " + symbol.getName();
+            i++;
+        }
         fromCurrency = new JComboBox<>(currencies);
         toCurrency = new JComboBox<>(currencies);
         convertButton = new JButton("Convert");
@@ -73,6 +79,13 @@ public class CurrencyConverter extends JFrame {
                 // For now, just copy the input to output as a placeholder
                 String input = inputField.getText();
                 outputField.setText(input);
+            }
+        });
+
+        toCurrency.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                outputField.setText(toCurrency.getSelectedItem().toString());
             }
         });
 
