@@ -128,7 +128,7 @@ public class Main {
             int i = 0;
         }
 
-        System.out.println(from.getSymbol()+ String.format("%.2f", amount) + " -> " + to.getSymbol() + String.format("%.2f", from.exchangeTo(to.getBase(), amount)));
+        System.out.println(from.getSymbol()+ String.format("%.2f", amount) + " -> " + to.getSymbol() + String.format("%.2f", from.exchangeTo(to, amount)));
     }
 
     private static Symbol getSymbol(HashMap<String, String> similar, BufferedReader inputReader, FileHandler file) throws IOException {

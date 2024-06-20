@@ -3,22 +3,24 @@ package za.co.cas;
 import com.google.gson.internal.LinkedTreeMap;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 
 public class CurrencyConverter extends JFrame {
 
-    private JTextField inputField;
-    private JTextField outputField;
-    private JComboBox<String> fromCurrency;
-    private JComboBox<String> toCurrency;
-    private JButton convertButton;
+    private final JTextField inputField;
+    private final JTextField outputField;
+    private final JComboBox<String> fromCurrency;
+    private final JComboBox<String> toCurrency;
+    private final JButton convertButton;
+    Symbol toSymbol, fromSymbol;
 
     public CurrencyConverter() {
         FileHandler file = new FileHandler();
@@ -30,12 +32,10 @@ public class CurrencyConverter extends JFrame {
         }};
         Thread updater = new Thread(file::update, "Symbols File Updater");
         updater.setDaemon(true);
-        boolean connected = false;
         try {
             URL url = new URL("api.frankfurter.app");
             URLConnection connection = url.openConnection();
             connection.connect();
-            connected = true;
             updater.start();
             new Thread(() -> {{
                     while (updater.isAlive()) {
@@ -46,10 +46,7 @@ public class CurrencyConverter extends JFrame {
                         }
                     }
                 }}).start();
-        } catch (MalformedURLException e) {
-            connected = false;
         } catch (IOException e) {
-            connected = false;
             System.out.println("Can't connect to: api.frankfurter.app");
         }
 
@@ -58,34 +55,73 @@ public class CurrencyConverter extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        inputField = new JTextField(10);
+        inputField = new JTextField("1",10);
         outputField = new JTextField(10);
         outputField.setEditable(false);
-//        String[] currencies = curries.toArray(new String[0]);
         String[] currencies = new String[symbols.size()];
         int i = 0;
         for (Symbol symbol : symbols) {
             currencies[i] = symbol.getBase() + ": " + symbol.getName();
             i++;
         }
+
         fromCurrency = new JComboBox<>(currencies);
+        fromSymbol = file.getSymbol(getBase(fromCurrency));
         toCurrency = new JComboBox<>(currencies);
+        toCurrency.setSelectedIndex(1);
+        toSymbol = file.getSymbol(getBase(toCurrency));
         convertButton = new JButton("Convert");
 
         convertButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Conversion logic would go here
-                // For now, just copy the input to output as a placeholder
-                String input = inputField.getText();
-                outputField.setText(input);
+                try {
+                    Double amount = Double.parseDouble(inputField.getText());
+                    outputField.setText(fromSymbol.exchangeTo(toSymbol, amount).toString());
+                } catch (NullPointerException | NumberFormatException err) {
+                    outputField.setText("");
+                }
+            }
+        });
+
+        inputField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateButtonState();
+            }
+
+            private void updateButtonState() {
+                if (!inputField.getText().isBlank()) {
+                    convertButton.setEnabled(false);
+                } else {
+                    convertButton.setEnabled(inputField.getText().strip().matches("(\\d+)?(\\d+.\\d+)|(\\d+)"));
+                }
+                convertButton.setEnabled(!inputField.getText().isBlank());
+
             }
         });
 
         toCurrency.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                outputField.setText(toCurrency.getSelectedItem().toString());
+                toSymbol = file.getSymbol(getBase(toCurrency));
+            }
+        });
+
+        fromCurrency.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                fromSymbol = file.getSymbol(getBase(fromCurrency));
             }
         });
 
@@ -109,6 +145,10 @@ public class CurrencyConverter extends JFrame {
         add(panel, BorderLayout.NORTH);
         add(outputPanel, BorderLayout.CENTER);
         add(convertButton, BorderLayout.SOUTH);
+    }
+
+    private static String getBase(JComboBox<String> dropbox) {
+        return dropbox.getSelectedItem().toString().substring(0, 3);
     }
 
     public static void main(String[] args) {

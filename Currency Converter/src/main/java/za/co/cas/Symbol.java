@@ -109,12 +109,18 @@ public class Symbol {
         output.append(delimiter).append(space).append("}");
         return output.toString();
     }
-
-    public Double exchangeTo(String symbol, Integer value) {
+    /*public Double exchangeTo(String symbol, Integer value) {
         return exchangeTo(symbol, (double) value);
     }
-    public Double exchangeTo(String symbol, Double value) {
+    public Double exchangeTo(Symbol symbol, Integer value) {
+        return exchangeTo(symbol.getBase(), (double) value);
+    }*/
+    public Double exchangeTo(Symbol symbol, Double value) {
+        return exchangeTo(symbol.getBase(), value);
+    }
+    private Double exchangeTo(String symbol, Double value) {
         double exchanged = 0;
+        if (symbol.equals(getBase())) return 1d;
         if (rates.containsKey(symbol)) {
             var ratio = rates.get(symbol);
             exchanged = (double) ratio * value;
