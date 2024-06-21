@@ -32,10 +32,12 @@ public class CurrencyConverter extends JFrame {
         }};
         Thread updater = new Thread(file::update, "Symbols File Updater");
         updater.setDaemon(true);
+//        boolean connected = false;
         try {
-            URL url = new URL("api.frankfurter.app");
+            URL url = new URL("https://api.frankfurter.app/");
             URLConnection connection = url.openConnection();
             connection.connect();
+//            connected = true;
             updater.start();
             new Thread(() -> {{
                     while (updater.isAlive()) {
@@ -58,6 +60,7 @@ public class CurrencyConverter extends JFrame {
         inputField = new JTextField("1",10);
         outputField = new JTextField(10);
         outputField.setEditable(false);
+        outputField.setHorizontalAlignment(JTextField.CENTER);
         String[] currencies = new String[symbols.size()];
         int i = 0;
         for (Symbol symbol : symbols) {
@@ -77,7 +80,7 @@ public class CurrencyConverter extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 try {
                     Double amount = Double.parseDouble(inputField.getText());
-                    outputField.setText(fromSymbol.exchangeTo(toSymbol, amount).toString());
+                    outputField.setText(String.format("%s %.2f",toSymbol.getSymbol(), fromSymbol.exchangeTo(toSymbol, amount)));
                 } catch (NullPointerException | NumberFormatException err) {
                     outputField.setText("");
                 }
@@ -101,13 +104,13 @@ public class CurrencyConverter extends JFrame {
             }
 
             private void updateButtonState() {
-                if (!inputField.getText().isBlank()) {
+                if (inputField.getText().isBlank()) {
+                    convertButton.setEnabled(false);
+                } else if (inputField.getText().matches("(\\w+)?([^\\d])")) {
                     convertButton.setEnabled(false);
                 } else {
                     convertButton.setEnabled(inputField.getText().strip().matches("(\\d+)?(\\d+.\\d+)|(\\d+)"));
                 }
-                convertButton.setEnabled(!inputField.getText().isBlank());
-
             }
         });
 
@@ -125,7 +128,6 @@ public class CurrencyConverter extends JFrame {
             }
         });
 
-        // Create panels for layout
         JPanel panel = new JPanel();
         panel.setLayout(new GridLayout(3, 2, 10, 10));
         panel.add(new JLabel("From:"));
@@ -140,7 +142,6 @@ public class CurrencyConverter extends JFrame {
         outputPanel.add(new JLabel("Converted Amount:"), BorderLayout.WEST);
         outputPanel.add(outputField, BorderLayout.CENTER);
 
-        // Add components to the frame
         setLayout(new BorderLayout());
         add(panel, BorderLayout.NORTH);
         add(outputPanel, BorderLayout.CENTER);
