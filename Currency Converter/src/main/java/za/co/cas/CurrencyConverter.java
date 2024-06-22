@@ -32,12 +32,10 @@ public class CurrencyConverter extends JFrame {
         }};
         Thread updater = new Thread(file::update, "Symbols File Updater");
         updater.setDaemon(true);
-//        boolean connected = false;
         try {
             URL url = new URL("https://api.frankfurter.app/");
             URLConnection connection = url.openConnection();
             connection.connect();
-//            connected = true;
             updater.start();
             new Thread(() -> {{
                     while (updater.isAlive()) {
@@ -153,11 +151,6 @@ public class CurrencyConverter extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new CurrencyConverter().setVisible(true);
-            }
-        });
+        new CurrencyConverter().setVisible(true);
     }
 }
