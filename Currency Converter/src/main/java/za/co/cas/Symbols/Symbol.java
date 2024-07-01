@@ -1,6 +1,7 @@
-package za.co.cas;
+package za.co.cas.Symbols;
 
 import com.google.gson.Gson;
+import za.co.cas.API.Request;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -9,6 +10,10 @@ import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a currency symbol and its exchange rates.
+ * Provides functionalities to convert between currencies and generate JSON representations.
+ */
 public class Symbol {
     private Double amount;
     private String base;
@@ -17,6 +22,12 @@ public class Symbol {
     private String date;
     private Map<?, ?> rates;
 
+    /**
+     * Constructs a Symbol with specified currency symbol, rates, and date.
+     * @param symbol The currency symbol.
+     * @param rates The exchange rates.
+     * @param date The date of the rates.
+     */
     public Symbol(String symbol, Map<?, ?> rates, String date) {
         this.amount = 1.0;
         this.base = symbol;
@@ -26,6 +37,10 @@ public class Symbol {
         setName();
     }
 
+    /**
+     * Constructs a Symbol by fetching exchange rates for the specified symbol.
+     * @param symbol The currency symbol.
+     */
     public Symbol(String symbol) {
         Gson gson = new Gson();
         String rates = Request.getRates(symbol);
@@ -38,6 +53,11 @@ public class Symbol {
         setName();
     }
 
+    /**
+     * Constructs a Symbol with specified currency symbol and rates, setting the date to the current date.
+     * @param symbol The currency symbol.
+     * @param rates The exchange rates.
+     */
     public Symbol(String symbol, Map<?, ?> rates) {
         this.amount = 1.0;
         this.base = symbol;
@@ -48,21 +68,42 @@ public class Symbol {
         setName();
     }
 
+    /**
+     * Creates a Symbol by fetching exchange rates for the specified symbol.
+     * @param symbol The currency symbol.
+     * @return A new Symbol object.
+     */
     public static Symbol create(String symbol) {
         String symbolRates = Request.getRates(symbol);
         Gson gson = new Gson();
         return gson.fromJson(symbolRates, Symbol.class);
     }
 
+    /**
+     * Converts the Symbol object to a Map.
+     * @return A Map representation of the Symbol.
+     */
     public Map<?, ?> toMap() {
         Gson gson = new Gson();
         return gson.fromJson(gson.toJson(this), HashMap.class);
     }
 
-    public String toJSON(){
+    /**
+     * Converts the Symbol object to a JSON string.
+     * @return A JSON string representation of the Symbol.
+     */
+    public String toJSON() {
         return toJSON(toMap(), "  ", "\n", true);
     }
 
+    /**
+     * Converts a Map to a JSON string with custom formatting.
+     * @param map The Map to convert.
+     * @param space The space string for indentation.
+     * @param delimiter The delimiter string for new lines.
+     * @param surround Whether to surround keys and values with quotes.
+     * @return A JSON string representation of the Map.
+     */
     public static String toJSON(Map<?, ?> map, String space, String delimiter, boolean surround) {
         StringBuilder output = new StringBuilder();
         output.append("{").append(delimiter);
@@ -79,8 +120,7 @@ public class Symbol {
                         output.append(key);
                     }
                     output.append(": ").append(toJSON((Map<?, ?>) value, "", "", surround));
-                }
-                else {
+                } else {
                     output.append(space);
                     if (key instanceof String && surround) {
                         output.append('\"').append(key).append('\"');
@@ -109,15 +149,23 @@ public class Symbol {
         output.append(delimiter).append(space).append("}");
         return output.toString();
     }
-    /*public Double exchangeTo(String symbol, Integer value) {
-        return exchangeTo(symbol, (double) value);
-    }
-    public Double exchangeTo(Symbol symbol, Integer value) {
-        return exchangeTo(symbol.getBase(), (double) value);
-    }*/
+
+    /**
+     * Converts the Symbol object to another currency.
+     * @param symbol The target currency symbol.
+     * @param value The amount to convert.
+     * @return The converted amount.
+     */
     public Double exchangeTo(Symbol symbol, Double value) {
         return exchangeTo(symbol.getBase(), value);
     }
+
+    /**
+     * Converts the Symbol object to another currency.
+     * @param symbol The target currency symbol.
+     * @param value The amount to convert.
+     * @return The converted amount.
+     */
     private Double exchangeTo(String symbol, Double value) {
         double exchanged = 0;
         if (symbol.equals(getBase())) return 1d;
@@ -128,9 +176,11 @@ public class Symbol {
         return exchanged;
     }
 
+    // Getters and Setters
     public String getSymbol() {
         return symbol;
     }
+
     public void setSymbol() {
         try {
             this.symbol = Currency.getInstance(this.base).getSymbol();
@@ -142,6 +192,7 @@ public class Symbol {
     public String getName() {
         return name;
     }
+
     public void setName() {
         try {
             this.name = Currency.getInstance(this.base).getDisplayName();
@@ -153,6 +204,7 @@ public class Symbol {
     public String getDate() {
         return date;
     }
+
     public void setDate(String date) {
         this.date = date;
     }
@@ -160,6 +212,7 @@ public class Symbol {
     public HashMap<String, Double> getRates() {
         return (HashMap<String, Double>) rates;
     }
+
     public void setRates(HashMap<String, Double> rates) {
         this.rates = rates;
     }
@@ -167,6 +220,7 @@ public class Symbol {
     public Double getAmount() {
         return amount;
     }
+
     public void setAmount(Double amount) {
         this.amount = amount;
     }
@@ -174,10 +228,15 @@ public class Symbol {
     public String getBase() {
         return base;
     }
+
     public void setBase(String base) {
         this.base = base;
     }
 
+    /**
+     * Returns a string representation of the Symbol object.
+     * @return A string representation of the Symbol.
+     */
     @Override
     public String toString() {
         Gson gson = new Gson();

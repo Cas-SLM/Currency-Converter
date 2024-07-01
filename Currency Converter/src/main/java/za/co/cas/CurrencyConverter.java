@@ -1,6 +1,8 @@
 package za.co.cas;
 
 import com.google.gson.internal.LinkedTreeMap;
+import za.co.cas.Files.FileHandler;
+import za.co.cas.Symbols.Symbol;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

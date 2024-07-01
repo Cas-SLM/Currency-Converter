@@ -1,7 +1,9 @@
-package za.co.cas;
+package za.co.cas.Files;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
+import za.co.cas.API.Request;
+import za.co.cas.Symbols.Symbol;
 
 import java.time.LocalDate;
 import java.io.*;
@@ -12,10 +14,9 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class FileHandler {
-//    private static final Map<String, String> env = System.getenv();
     private static final String SP = File.separator;
     private static final String PATH = System.getProperty("user.dir") + SP + "Currency Converter" + SP + "src" + SP +
-            "main" + SP + "java" + SP + "za" + SP + "co" + SP + "cas" + SP + "Symbols.json";
+            "main" + SP + "java" + SP + "za" + SP + "co" + SP + "cas" + SP + "Symbols" + SP + "Symbols.json";
     private static final File SYMBOLS_FILE = new File(PATH);
     private static final Gson GSON = new Gson();
     private Map<?, ?> contents; // = new LinkedTreeMap<>();
@@ -29,16 +30,6 @@ public class FileHandler {
     private LinkedTreeMap<String, String> supported;
 
     public FileHandler() {
-        /*Thread update = new Thread(this::update);
-        update.start();
-        while (update.isAlive()){
-            try {
-                System.out.println("Updating...");
-                Thread.sleep(2500);
-            } catch (InterruptedException e) {
-                continue;
-            }
-        }*/
         contents = contents();
         date = (String) contents.get("date");
         rates = (LinkedTreeMap<String, LinkedTreeMap>) contents().get("rates");
@@ -91,10 +82,8 @@ public class FileHandler {
     }
 
     public Map<String, String> findSimilar(String currency) {
-//        LinkedTreeMap<?, ?> supported = (LinkedTreeMap) contents().get("supported");
         HashMap<String, String> similar = new HashMap<>();
         for (var key : supported.keySet()) {
-//            assert key instanceof String;
             String value = supported.get(key).toLowerCase();
             if (((String) key).toLowerCase().endsWith(currency.toLowerCase())) {
                 similar.put((String) key, value);
@@ -159,7 +148,6 @@ public class FileHandler {
         if (contents.containsKey("supported")) {
             if (!contents.get("date").equals(today)) {
                 var supported = contents.get("supported");
-                //NOTE: supported might be a LinkedTreeMap
                 assert supported instanceof Map<?, ?>;
                 for (var key : ((Map<?, ?>) supported).keySet()) {
                     assert key instanceof String;

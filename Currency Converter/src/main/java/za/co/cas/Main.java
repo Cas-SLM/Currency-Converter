@@ -1,5 +1,8 @@
 package za.co.cas;
 
+import za.co.cas.Files.FileHandler;
+import za.co.cas.Symbols.Symbol;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
