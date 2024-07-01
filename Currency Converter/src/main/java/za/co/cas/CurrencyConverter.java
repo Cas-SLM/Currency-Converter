@@ -152,7 +152,7 @@ public class CurrencyConverter extends JFrame {
         return dropbox.getSelectedItem().toString().substring(0, 3);
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         new CurrencyConverter().setVisible(true);
-    }
+    }*/
 }

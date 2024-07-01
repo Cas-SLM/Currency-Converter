@@ -50,27 +50,38 @@ public class Main {
             System.out.println("Can't connect to: " + target);
         }
         boolean on = true;
-        try {
-        do {
-            convert(file);
-            System.out.println("Do you want to continue? (Y/no)");
-            String input = inputReader.readLine();
-            switch (input.toLowerCase()) {
-                case "yes":
-                case "y":
-                    on = true;
-                    break;
-                case "no":
-                case "n":
-                    on = false;
-                    break;
-                default:
-                    continue;
+            try {
+                String input;
+                System.out.println("Do want to run the GUI version, Yes or No?");
+                input = inputReader.readLine();
+                switch (input.toLowerCase()) {
+                    case "yes", "y":
+                        CurrencyConverter converter = new CurrencyConverter();
+                        converter.setVisible(true);
+                        break;
+                    case "no", "n":
+                        do {
+                            convert(file);
+                            System.out.println("Do you want to continue? (Y/no)");
+                            input = inputReader.readLine();
+                            switch (input.toLowerCase()) {
+                                case "yes":
+                                case "y":
+                                    on = true;
+                                    break;
+                                case "no":
+                                case "n":
+                                    on = false;
+                                    break;
+                                default:
+                                    continue;
+                            }
+                        } while (on);
+                        break;
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } while (on);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private static void convert(FileHandler file) {
@@ -80,6 +91,8 @@ public class Main {
             do {
                 System.out.println("Currency to convert from: ");
                 String in = inputReader.readLine();
+                if (in.equalsIgnoreCase("exit"))
+                    break;
                 HashMap<String, String> similar = (HashMap<String, String>) file.findSimilar(in);
                 if (similar.size() == 1) {
                     ArrayList<String> keys = new ArrayList<>(similar.keySet());
@@ -103,6 +116,8 @@ public class Main {
             do {
                 System.out.println("Currency to convert to: ");
                 String in = inputReader.readLine();
+                if (in.equalsIgnoreCase("exit"))
+                    break;
                 HashMap<String, String> similar = (HashMap<String, String>) file.findSimilar(in);
                 if (similar.size() == 1) {
                     ArrayList<String> keys = new ArrayList<>(similar.keySet());
