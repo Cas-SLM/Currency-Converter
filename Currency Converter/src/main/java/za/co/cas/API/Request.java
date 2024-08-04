@@ -39,10 +39,10 @@ public class Request {
         }
 
         // Check if the response is successful (status code 200) and return body
-        if (exRatesResponse.statusCode() == 200)
-            return exRatesResponse.body();
-        else
-            return ""; // Return empty string if response status code is not 200
+//        if (exRatesResponse.statusCode() == 200)
+        return exRatesResponse.body();
+//        else
+//            return ""; // Return empty string if response status code is not 200
     }
 
     /**

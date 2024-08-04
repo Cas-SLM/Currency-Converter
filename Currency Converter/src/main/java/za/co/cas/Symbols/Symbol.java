@@ -42,15 +42,19 @@ public class Symbol {
      * @param symbol The currency symbol.
      */
     public Symbol(String symbol) {
-        Gson gson = new Gson();
-        String rates = Request.getRates(symbol);
-        Symbol newSymbol = gson.fromJson(rates, Symbol.class);
-        this.amount = newSymbol.getAmount();
-        this.base = newSymbol.getBase();
-        this.date = newSymbol.getDate();
-        this.rates = newSymbol.getRates();
-        setSymbol();
-        setName();
+        try {
+            Gson gson = new Gson();
+            String rates = Request.getRates(symbol);
+            Symbol newSymbol = gson.fromJson(rates, Symbol.class);
+            this.amount = newSymbol.getAmount();
+            this.base = newSymbol.getBase();
+            this.date = newSymbol.getDate();
+            this.rates = newSymbol.getRates();
+            setSymbol();
+            setName();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -74,9 +78,14 @@ public class Symbol {
      * @return A new Symbol object.
      */
     public static Symbol create(String symbol) {
-        String symbolRates = Request.getRates(symbol);
-        Gson gson = new Gson();
-        return gson.fromJson(symbolRates, Symbol.class);
+        try {
+            String symbolRates = Request.getRates(symbol);
+            Gson gson = new Gson();
+            return gson.fromJson(symbolRates, Symbol.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
